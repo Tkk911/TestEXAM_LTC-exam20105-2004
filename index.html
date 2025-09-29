@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ข้อสอบสอบวิชา 20105 - 2004 เขียนแบบอิเล็กทรอนิกส์ด้วยคอมพิวเตอร์ — Quiz with Admin</title>
+<style>
+  :root{--bg:#f6f7fb;--card:#fff;--accent:#276ef1;--muted:#666;}
+  html,body{height:100%;margin:0;font-family:"Noto Sans Thai","Sarabun",Arial,sans-serif;background:var(--bg);color:#222}
+  .wrap{max-width:920px;margin:28px auto;padding:20px}
+  .card{background:var(--card);border-radius:12px;box-shadow:0 8px 28px rgba(20,30,60,0.08);padding:20px}
+  h1{margin:0 0 10px;font-size:20px}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  input[type=text],select,textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;font-size:15px}
+  .row{display:flex;gap:12px}
+  .col{flex:1}
+  .center{text-align:center}
+  .timer{font-weight:700;color:#fff;background:var(--accent);padding:8px 12px;border-radius:10px}
+  .controls{display:flex;gap:10px;align-items:center;margin-top:12px}
+  button{background:var(--accent);color:#fff;border:0;padding:8px 14px;border-radius:8px;cursor:pointer}
+  button[disabled]{opacity:.45;cursor:not-allowed}
+  .question-number{font-size:13px;color:var(--muted)}
+  .options{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+  .option{padding:10px;border-radius:8px;border:1px solid #eee;cursor:pointer;background:#d8f3dc;transition: background 0.3s ease;}
+  .option input{margin-right:10px}
+  .nav{display:flex;justify-content:space-between;margin-top:18px}
+  .summary{margin-top:12px}
+  .hidden{display:none}
+  .small{font-size:13px;color:var(--muted)}
+  .admin{margin-top:18px;border-top:1px dashed #eee;padding-top:14px}
+  pre{background:#fafafa;padding:12px;border-radius:8px;overflow:auto}
+  .img-preview{max-width:300px;border-radius:8px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  footer.small{margin-top:18px;color:var(--muted);text-align:center}
+
+#qText{background:#d8f3dc;padding:8px;border-radius:8px;}
+.option.selected{background:#95d5b2 !important;}
+.option.incorrect{background:#f8d7da !important;}
+.option:hover{background:#b7e4c7;}
+</style>
+</head>
+<body>
+
+<h2>วันที่สอบและเวลาปัจจุบัน</h2>
+<p id="currentDateTime"></p>
+    <script>
+        const now = new Date();
+        document.getElementById('currentDateTime').textContent = 
+            'เมื่อสอบเสร็จพิมพ์ผลสอบเป็น .PDF ไฟล์ ส่งไฟล์ทางLINE ID :4520261225 ให้อาจารย์ประจำรายวิชา วันที่สอบและเวลาส่งคะแนน ' + now.toLocaleString('th-TH');
+</script>
+
+<div class="wrap card" id="app">
+  <div class="topbar">
+    <div style="text-align:center;">      
+      <img src="logoLTC.png" alt="วิทยาลัย" width="86" height="80">
+      <h2>วิทยาลัยเทคโนโลยีแหลมทอง</h2>      
+      <h1> ข้อสอบปลายภาคเรียน&emsp;  ภาคเรียนที่  1&emsp;  ปีการศึกษา  2568 </h1>
+      <h1> วิชา เขียนแบบอิเล็กทรอนิกส์ด้วยคอมพิวเตอร์&emsp;   รหัสวิชา      20105-2004&emsp; ชั้น  ปวช. 2 อิเล็กทรอนิกส์ </h1>      
+      <h1> อาจารย์ผู้ออกข้อสอบ&emsp;  อ.ธีระ  กลมเกลา</h1>
+      <div class="miduim">เวลาสอบ 40 นาที — แสดงคำถามทีละข้อ — จำนวน 40 ข้อ   คะแนนเต็ม (40 คะแนน)</div>
+    </div>
+    <div><div class="timer" id="timer">40:00</div></div>
+  </div>
+
+  <!-- Start / Registration -->
+  <div id="register" class="card" >
+    <div style="display:grid;gap:20px">
+      <label>รหัสนักศึกษา หรือ รหัสประชาชน (ถ้ามี)</label>
+      <input type="text" id="stuId" placeholder="เช่น 123456">
+      <div class="row">
+        <div class="col">
+          <label>ชื่อ - สกุล *</label>
+          <input type="text" id="fullname" placeholder="เช่น สมชาย ใจดี">
+        </div>
+        <div class="col">
+          <label>สาขา *</label>
+          <input type="text" id="major" placeholder="เช่น ช่างอิเล็กทรอนิกส์">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <label class="small" style="margin:0">จำนวนข้อสอบ:</label>
+        <div id="totalCount" class="small">--</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button id="startBtn">เริ่มทำข้อสอบ</button>
+        <!-- ปุ่ม Admin Login -->
+        <button id="adminLoginBtn" style="background:#e67e22">Admin Login</button>
+      </div>
+      <div class="miduim">ผู้สอบต้องตอบทุกข้อจึงจะส่งได้</div>
+    </div>
+  </div>
+
+  <!-- Quiz Area -->
+  <div id="quizArea" class="hidden">
+    <div class="question-header">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h1 class="question-number" id="qNumber">ข้อที่ 1 / 50</h1>
+          <h2 id="qText" style="margin:6px 0">คำถาม...</h2>
+        </div>
+        <div style="text-align:right">
+          <div class="small">ผู้เข้าสอบ</div>
+          <div id="infoName" style="font-weight:700"></div>
+          <div class="small" id="infoMajor"></div>
+        </div>
+      </div>
+    </div>
+    <div id="qImageArea" style="margin-top:10px"></div>
+    <div class="options" id="optionsArea"></div>
+    <div class="nav">
+      <div>
+        <button id="prevBtn">ก่อนหน้า</button>
+        <button id="nextBtn">ถัดไป</button>
+      </div>
+      <div>
+        <button id="finishBtn" disabled>ส่งข้อสอบ</button>
+      </div>
+    </div>
+    <div class="miduim" style="margin-top:8px">เวลาที่เหลือ: <span id="timeLeft" style="font-weight:700"></span></div>
+  </div>
+
+  <!-- Result -->
+  <div id="resultArea" class="hidden card">
+    <h2>ผลการสอบ</h2>
+    <div id="resultSummary"></div>
+    <div style="margin-top:12px">
+      <button id="printBtn">พิมพ์เป็น PDF</button>
+      <button id="restartBtn" style="background:#777">เริ่มใหม่</button>
+    </div>
+  </div>
+
+  <!-- Admin / Editor -->
+  <div id="editorArea" class="hidden card admin">
+    <h3>Editor — แก้ไขแบบทดสอบ (สำหรับผู้ดูแล)</h3>
+    <div class="small">ใส่/แก้ไขคำถาม ตัวเลือก คำตอบที่ถูกต้อง และเพิ่มรูปภาพได้</div>
+    <div style="margin-top:10px">
+      <label>JSON ข้อสอบ</label>
+      <textarea id="questionJson" style="height:220px;font-family:monospace;"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="saveQuestionsBtn" style="background:#2a9d8f">บันทึก</button>
+        <button id="addQBtn" style="background:#4a90e2">เพิ่มข้อ</button>
+        <button id="exportBtn" style="background:#444">ดาวน์โหลด JSON</button>
+        <button id="importBtn" style="background:#666">อัปโหลด JSON</button>
+        <input id="fileIn" type="file" accept="application/json" class="hidden">
+      </div>
+      <div style="margin-top:10px">
+        <label>เพิ่มรูปให้ข้อแรก (ตัวอย่าง)</label>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <input type="file" id="imgFile" accept="image/*">
+          <button id="attachImgBtn">เพิ่มรูปให้ข้อแรก</button>
+        </div>
+        <div id="imgPreviewWrap" style="margin-top:8px"></div>
+      </div>
+      <!-- ปุ่มกลับ -->
+      <button id="backToStartBtn" style="background:#777;margin-top:12px">กลับหน้าเริ่มต้น</button>
+    </div>
+  </div>
+
+  <footer class="small">ไฟล์ HTML พร้อมโหมด Admin — ผู้พัฒนาติดต่อ klomklaotkk911@gmail.com</footer>
+</div>
+
+<script>
+/* === ตั้งค่ารหัสผ่าน Admin === */
+const ADMIN_PASS = "quiz1234";
+/* === JSON ฐานข้อมูลข้อสอบ === */
+const DEFAULT_QUESTIONS = [
+{
+    "id": 1,
+    "text": "MS Visio 2007 ใช้สำหรับงานใดเป็นหลัก *",
+    "options": ["พิมพ์เอกสาร", "สร้างผังงานและแผนภาพ", "ตกแต่งรูปภาพ", "เขียนตารางคำนวณ"],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 2,
+    "text": "ไฟล์ที่บันทึกจาก Visio มีนามสกุลเริ่มต้นคือ *",
+    "options": [".doc", ".vsd", ".xls", ".dwg"],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 3,
+    "text": "Stencil ใน Visio หมายถึงอะไร *",
+    "options": ["เครื่องมือแก้ไขข้อความ", "เครื่องมือเลือกเส้น", "แหล่งรวมรูปร่างสำเร็จรูป", "พื้นหลังของเอกสาร"],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 4,
+    "text": "การซูมเข้า–ออกใน Visio สามารถทำได้จากเมนูใด *",
+    "options": ["File", "Edit", "View", "Tools"],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 5,
+    "text": "การสร้าง Flowchart ใน Visio นิยมใช้รูปร่างใดแทนการเริ่มต้น–สิ้นสุด *",
+    "options": ["วงกลม", "สี่เหลี่ยมขนมเปียกปูน", "สี่เหลี่ยมผืนผ้า", "วงรี"],
+    "correct": 4,
+    "img": ""
+  },
+  {
+    "id": 6,
+    "text": "การเชื่อมโยงรูปร่างใน Visio ใช้เครื่องมือใด *",
+    "options": ["Connector", "Line", "Arrow", "Text Tool"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 7,
+    "text": "Page Setup ใน Visio ใช้สำหรับ *",
+    "options": ["กำหนดสีเส้น", "ตั้งค่าหน้ากระดาษและขอบเขตการพิมพ์", "เปลี่ยนฟอนต์", "จัดเรียงรูปร่าง"],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 8,
+    "text": "Layer ใน Visio มีประโยชน์อย่างไร *",
+    "options": ["ใช้ในการเปลี่ยนสีตัวอักษร", "ช่วยจัดกลุ่มและซ่อน/แสดงองค์ประกอบ", "เพิ่มขนาดตัวอักษร", "ใช้ใส่พื้นหลัง"],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 9,
+    "text": "Shape Data ใน Visio ใช้สำหรับ *",
+    "options": ["เก็บข้อมูลเพิ่มเติมของรูปร่าง", "สร้างเส้นกรอบ", "ปรับสีสันรูปร่าง", "จัดเรียงตำแหน่ง"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 10,
+    "text": "การ Export งานจาก Visio ไปเป็นไฟล์ภาพ ใช้คำสั่งใด *",
+    "options": ["File → Save As → เลือกประเภทไฟล์", "Edit → Copy", "View → Picture", "Insert → Image"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 11,
+    "text": "Template ของ Visio มีไว้เพื่อ *",
+    "options": ["สร้างงานที่เป็นมาตรฐานได้รวดเร็ว", "แก้ไขข้อความ", "วาดเส้นโค้ง", "ใส่สีพื้นหลัง"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 12,
+    "text": "การสร้าง Organizational Chart ควรใช้หมวดใดของ Template *",
+    "options": ["Business", "Engineering", "Software", "Network"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 13,
+    "text": "การเปลี่ยนขนาดรูปร่างใน Visio ทำได้โดย *",
+    "options": ["คลิกเมาส์ขวา → Resize", "ลากที่จุดจับของรูปร่าง", "ใช้ปุ่ม F5", "ไปที่ View → Zoom"],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 14,
+    "text": "Quick Shapes ใน Visio หมายถึง *",
+    "options": ["รูปร่างที่ใช้บ่อย", "การจัดรูปแบบตัวอักษร", "การแทรกตาราง", "การซูมเข้าออก"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 15,
+    "text": "Container ใน Visio มีประโยชน์เพื่อ *",
+    "options": ["จัดกลุ่มรูปร่างให้อยู่รวมกัน", "เปลี่ยนสีรูปร่าง", "เพิ่มข้อความอัตโนมัติ", "ซ่อนรูปร่าง"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 16,
+    "text": "Background Page ใน Visio ใช้ทำอะไร *",
+    "options": ["ซ่อนรูปร่าง", "ใส่ข้อความอธิบาย", "สร้างพื้นหลังที่ใช้ซ้ำได้", "ปรับขนาดกระดาษ"],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 17,
+    "text": "Connector Tool ใน Visio ใช้สำหรับ *",
+    "options": ["เขียนเส้นเชื่อมรูปร่าง", "เปลี่ยนสีเส้น", "ใส่ข้อความ", "ลบรูปร่าง"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 18,
+    "text": "Auto Align & Space ใช้สำหรับ *",
+    "options": ["จัดเรียงรูปร่างอัตโนมัติ", "ใส่สีพื้นหลัง", "ซ่อนรูปร่าง", "ทำให้ข้อความตรงกลาง"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 19,
+    "text": "Cross-Functional Flowchart Template ใช้ทำอะไร *",
+    "options": ["เขียนผังงานที่แบ่งตามแผนก", "ทำผังงานเครือข่าย", "ทำแผนภาพ UML", "เขียนผังบ้าน"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 20,
+    "text": "Visio สามารถเชื่อมโยงข้อมูลจาก Excel ได้โดยใช้ฟีเจอร์ใด *",
+    "options": ["Data Linking", "SmartArt", "OLE", "Clipboard"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 21,
+    "text": "ไฟล์มาตรฐานที่สร้างจาก AutoCAD มีนามสกุลใด *",
+    "options": [".doc", ".dwg", ".vsd", ".jpg"],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 22,
+    "text": "คำสั่ง Line ใช้สำหรับ *",
+    "options": ["วาดเส้นตรง", "วาดวงกลม", "สร้างข้อความ", "ลบเส้น"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 23,
+    "text": "คำสั่ง Trim ใช้เพื่อ *",
+    "options": ["ต่อเส้น", "ตัดเส้นส่วนเกินออก", "คัดลอกเส้น", "ย้ายเส้น"],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 24,
+    "text": "คำสั่ง Circle ใช้ร่วมกับพารามิเตอร์ใดได้ *",
+    "options": ["Radius หรือ Diameter", "Width หรือ Height", "Angle หรือ Length", "Text หรือ Symbol"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 25,
+    "text": "คำสั่ง Offset ใช้เพื่อ *",
+    "options": ["ลบเส้น", "คัดลอกเส้นขนานห่างออกไปตามระยะ", "สร้างวงกลม", "หมุนวัตถุ"],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 26,
+    "text": "การตั้งค่า Layer ใน AutoCAD ใช้เพื่อ *",
+    "options": ["จัดเก็บไฟล์", "แบ่งกลุ่มเส้น/วัตถุ จัดการสีและเส้น", "ย่อขยายรูปวาด", "ใส่ข้อความ"],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 27,
+    "text": "คำสั่ง Zoom Extents ใช้ทำอะไร *",
+    "options": ["ซูมไปที่พื้นที่ที่เลือก", "ซูมทั้งแบบแปลนให้พอดีกับหน้าจอ", "ซูมออกไกลที่สุด", "หมุนวัตถุ"],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 28,
+    "text": "Model Space ใน AutoCAD หมายถึง *",
+    "options": ["พื้นที่ทำงานหลักสำหรับเขียนแบบ", "พื้นที่สำหรับพิมพ์งาน", "พื้นที่เก็บไฟล์", "พื้นที่ตั้งค่า Layer"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 29,
+    "text": "Paper Space ใช้สำหรับ *",
+    "options": ["การสร้างตารางคำนวณ", "การจัดการมุมมองและการพิมพ์แบบ", "การวาดแบบจริง", "การใส่สี"],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 30,
+    "text": "Plot ใน AutoCAD หมายถึง *",
+    "options": ["การบันทึกไฟล์", "การพิมพ์หรือส่งออกงานเขียนแบบ", "การสร้าง Layer", "การคัดลอกวัตถุ"],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 31,
+    "text": "คำสั่ง Move ใช้สำหรับ *",
+    "options": ["หมุนวัตถุ", "ย้ายวัตถุ", "ลบวัตถุ", "สร้างเลเยอร์"],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 32,
+    "text": "คำสั่ง Copy ใช้สำหรับ *",
+    "options": ["คัดลอกวัตถุ", "หมุนวัตถุ", "ย่อขยายวัตถุ", "ลบวัตถุ"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 33,
+    "text": "คำสั่ง Mirror ใช้เพื่อ *",
+    "options": ["สะท้อนวัตถุ", "ซูมวัตถุ", "ลบวัตถุ", "เขียนข้อความ"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 34,
+    "text": "คำสั่ง Array ใช้สำหรับ *",
+    "options": ["สร้างวัตถุซ้ำเป็นแถวหรือวงกลม", "ลบวัตถุซ้ำ", "ย่อขยายวัตถุ", "หมุนวัตถุ"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 35,
+    "text": "คำสั่ง Hatch ใช้ทำอะไร *",
+    "options": ["ใส่ลวดลายหรือพื้นที่ระบาย", "ใส่ข้อความ", "ตัดเส้น", "สร้างเส้น"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 36,
+    "text": "คำสั่ง Dimension ใช้เพื่อ *",
+    "options": ["ใส่ขนาด", "ใส่สี", "ใส่ข้อความ", "ใส่ลวดลาย"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 37,
+    "text": "Snap Mode ใน AutoCAD หมายถึง *",
+    "options": ["การล็อคการเคลื่อนไหวตามระยะ", "การใส่ข้อความอัตโนมัติ", "การสร้าง Layer", "การลบเส้น"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 38,
+    "text": "Ortho Mode ใช้เพื่อ *",
+    "options": ["จำกัดเส้นให้ตรงแนวนอนและแนวตั้ง", "วาดเส้นโค้ง", "สร้างข้อความ", "หมุนวัตถุ"],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 39,
+    "text": "คำสั่ง Explode ใช้เพื่อ *",
+    "options": ["รวมวัตถุหลายชิ้นให้เป็นชิ้นเดียว", "รวมวัตถุ", "ลบวัตถุ", "แยกวัตถุที่เป็น Block ออกเป็นชิ้นย่อย"],
+    "correct": 4,
+    "img": ""
+  },
+  {
+    "id": 40,
+    "text": "คำสั่ง Block ใช้เพื่อ *",
+    "options": ["รวมวัตถุหลายชิ้นให้เป็นชิ้นเดียว", "ลบวัตถุ", "ย้ายวัตถุ", "ใส่ข้อความ"],
+    "correct": 1,
+    "img": ""
+  }
+
+];
+
+/* ==== ฟังก์ชันและตัวแปรหลัก ==== */
+function loadQuestions(){
+  const raw=localStorage.getItem('quiz_questions');
+  if(raw){try{const q=JSON.parse(raw);if(Array.isArray(q)&&q.length>0)return q;}catch(e){}}
+  return DEFAULT_QUESTIONS;
+}
+function saveQuestionsToStorage(q){localStorage.setItem('quiz_questions',JSON.stringify(q));}
+
+let questions=loadQuestions();
+let currentIndex=0,timerSeconds=40*60,timerInterval=null,answers=[],meta={fullname:'',major:'',stuId:''};
+
+const totalCountDisplay=document.getElementById('totalCount');
+const startBtn=document.getElementById('startBtn');
+const adminLoginBtn=document.getElementById('adminLoginBtn');
+const registerDiv=document.getElementById('register');
+const quizArea=document.getElementById('quizArea');
+const qNumber=document.getElementById('qNumber');
+const qText=document.getElementById('qText');
+const optionsArea=document.getElementById('optionsArea');
+const prevBtn=document.getElementById('prevBtn');
+const nextBtn=document.getElementById('nextBtn');
+const finishBtn=document.getElementById('finishBtn');
+const timerEl=document.getElementById('timer');
+const timeLeftEl=document.getElementById('timeLeft');
+const infoName=document.getElementById('infoName');
+const infoMajor=document.getElementById('infoMajor');
+const resultArea=document.getElementById('resultArea');
+const resultSummary=document.getElementById('resultSummary');
+const printBtn=document.getElementById('printBtn');
+const restartBtn=document.getElementById('restartBtn');
+const fullnameInput=document.getElementById('fullname');
+const majorInput=document.getElementById('major');
+const stuIdInput=document.getElementById('stuId');
+const editorArea=document.getElementById('editorArea');
+const questionJsonTextarea=document.getElementById('questionJson');
+const saveQuestionsBtn=document.getElementById('saveQuestionsBtn');
+const addQBtn=document.getElementById('addQBtn');
+const exportBtn=document.getElementById('exportBtn');
+const importBtn=document.getElementById('importBtn');
+const fileIn=document.getElementById('fileIn');
+const imgFile=document.getElementById('imgFile');
+const attachImgBtn=document.getElementById('attachImgBtn');
+const imgPreviewWrap=document.getElementById('imgPreviewWrap');
+const backToStartBtn=document.getElementById('backToStartBtn');
+
+function fmtTime(s){const m=Math.floor(s/60),sec=s%60;return String(m).padStart(2,'0')+":"+String(sec).padStart(2,'0');}
+function refreshTotals(){totalCountDisplay.textContent=questions.length+" ข้อ";}
+refreshTotals();
+questionJsonTextarea.value=JSON.stringify(questions,null,2);
+
+/* ==== โหมดผู้สอบ ==== */
+startBtn.addEventListener('click',()=>{
+  const name=fullnameInput.value.trim(),major=majorInput.value.trim(),id=stuIdInput.value.trim();
+  if(!name||!major){alert('กรุณากรอก ชื่อ-สกุล และ สาขา');return;}
+  meta={fullname:name,major:major,stuId:id};
+  infoName.textContent=name; infoMajor.textContent=major;
+  registerDiv.classList.add('hidden'); quizArea.classList.remove('hidden');
+  answers=new Array(questions.length).fill(null); currentIndex=0;
+  renderQuestion();
+  timerSeconds=40*60; timerEl.textContent=fmtTime(timerSeconds); timeLeftEl.textContent=fmtTime(timerSeconds);
+  if(timerInterval)clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    timerSeconds--; timerEl.textContent=fmtTime(timerSeconds); timeLeftEl.textContent=fmtTime(timerSeconds);
+    if(timerSeconds<=0){clearInterval(timerInterval);alert('หมดเวลา ส่งข้อสอบอัตโนมัติ');submitQuiz();}
+  },1000);
+});
+
+function renderQuestion(){
+  const q=questions[currentIndex];
+  qNumber.textContent=`ข้อที่ ${currentIndex+1} / ${questions.length}`;
+  qText.textContent=q.text;
+  const qImageArea=document.getElementById('qImageArea');
+  qImageArea.innerHTML=''; if(q.img){const img=document.createElement('img');img.src=q.img;img.className='img-preview';qImageArea.appendChild(img);}
+  optionsArea.innerHTML='';
+  q.options.forEach((opt,idx)=>{
+    const div=document.createElement('label');div.className='option';
+    const radio=document.createElement('input');radio.type='radio';radio.name='option';radio.value=idx;
+    if(answers[currentIndex]===idx)radio.checked=true;
+    radio.addEventListener('change',()=>{answers[currentIndex]=idx;updateNavButtons();});
+    div.appendChild(radio);div.appendChild(document.createTextNode(opt));optionsArea.appendChild(div);
+  });
+  updateNavButtons();
+}
+function updateNavButtons(){
+  prevBtn.disabled=currentIndex===0;
+  nextBtn.disabled=currentIndex===questions.length-1;
+  finishBtn.disabled=!(currentIndex===questions.length-1 && answers.every(a=>a!==null));
+}
+prevBtn.onclick=()=>{if(currentIndex>0){currentIndex--;renderQuestion();}};
+nextBtn.onclick=()=>{if(answers[currentIndex]===null){alert('เลือกคำตอบก่อน');return;} if(currentIndex<questions.length-1){currentIndex++;renderQuestion();}};
+finishBtn.onclick=()=>{if(currentIndex!==questions.length-1||!answers.every(a=>a!==null)){alert('ตอบทุกข้อก่อนส่ง');return;} if(confirm('ต้องการส่งข้อสอบ?'))submitQuiz();};
+
+function submitQuiz(){
+  if(timerInterval)clearInterval(timerInterval);
+  let correctCount=0;const details=[];
+  questions.forEach((q,i)=>{
+    const chosen=answers[i],ok=(chosen +1 ===q.correct);
+    if(ok)correctCount++;
+    details.push({i:i+1,text:q.text,chosenText:q.options[chosen],correctText:q.options[q.correct-1],ok});
+  });
+  quizArea.classList.add('hidden'); resultArea.classList.remove('hidden');
+  let html=`<p>ชื่อ: <b>${meta.fullname}</b> | สาขา: <b>${meta.major}</b> | รหัส: ${meta.stuId||'-'}</p>`;
+  html+=`<p>คะแนน: <b>${correctCount}</b> / ${questions.length}</p><ol>`;
+  details.forEach(d=>{html+=`<li>${d.text}<div class="small">ตอบ: ${d.chosenText||'-'} ${d.ok?'✅':'❌'} | ถูก: ${d.correctText}</div></li>`});
+  html+='</ol>'; resultSummary.innerHTML=html;
+}
+printBtn.onclick=()=>window.print();
+restartBtn.onclick=()=>{if(confirm('เริ่มใหม่?'))location.reload();};
+
+/* ==== โหมด Admin ==== */
+adminLoginBtn.addEventListener('click',()=>{
+  const pw=prompt("กรอกรหัสผ่านผู้ดูแล:");  
+  if(pw===ADMIN_PASS){
+    registerDiv.classList.add('hidden');
+    editorArea.classList.remove('hidden');
+    questionJsonTextarea.value=JSON.stringify(questions,null,2);
+    showImgPreview(questions[0] && questions[0].img);
+  }else if(pw!==null){alert("รหัสผ่านไม่ถูกต้อง");}
+});
+backToStartBtn.onclick=()=>{editorArea.classList.add('hidden');registerDiv.classList.remove('hidden');};
+
+/* ==== Editor Functions ==== */
+function showImgPreview(dataUrl){
+  imgPreviewWrap.innerHTML=''; if(!dataUrl)return;
+  const img=document.createElement('img');img.src=dataUrl;img.style.maxWidth='220px';img.style.borderRadius='8px';
+  imgPreviewWrap.appendChild(img);
+}
+saveQuestionsBtn.onclick=()=>{
+  try{
+    const parsed=JSON.parse(questionJsonTextarea.value);
+    if(!Array.isArray(parsed))throw 'ต้องเป็น array';
+    questions=parsed; saveQuestionsToStorage(questions);
+    refreshTotals(); alert('บันทึกสำเร็จ');
+  }catch(e){alert('JSON ไม่ถูกต้อง: '+e);}
+};
+addQBtn.onclick=()=>{
+  questions.push({id:questions.length+1,text:'คำถามใหม่',options:['ตัวเลือก A','ตัวเลือก B'],correct:0,img:''});
+  questionJsonTextarea.value=JSON.stringify(questions,null,2);
+  saveQuestionsToStorage(questions); refreshTotals();
+};
+exportBtn.onclick=()=>{
+  const blob=new Blob([JSON.stringify(questions,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url;a.download='quiz_questions.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+};
+importBtn.onclick=()=>fileIn.click();
+fileIn.onchange=(e)=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{const p=JSON.parse(r.result);if(!Array.isArray(p))throw 'ไม่ใช่ array';
+      questions=p; questionJsonTextarea.value=JSON.stringify(questions,null,2);
+      saveQuestionsToStorage(questions); refreshTotals(); alert('นำเข้าเรียบร้อย');
+    }catch(err){alert('ผิดพลาด: '+err);}
+  }; r.readAsText(f);
+};
+attachImgBtn.onclick=()=>{
+  const f=imgFile.files[0]; if(!f)return alert('เลือกไฟล์รูปก่อน');
+  const r=new FileReader();
+  r.onload=()=>{ if(questions.length===0)return alert('ไม่มีข้อสอบ');
+    questions[0].img=r.result;
+    questionJsonTextarea.value=JSON.stringify(questions,null,2);
+    saveQuestionsToStorage(questions); showImgPreview(r.result);
+    alert('เพิ่มรูปให้ข้อแรกแล้ว');
+  }; r.readAsDataURL(f);
+};
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
+</script>
+</body>
+</html>
